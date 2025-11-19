@@ -1,49 +1,78 @@
-🏡 보스턴 주택 가격 예측 모델 (K-겹 교차 검증 및 최적화)
-안녕하세요! 이 저장소에는 Keras를 사용하여 보스턴 주택 가격 데이터를 분석하고 예측하는 신경망 모델 훈련 실습 결과가 담겨 있습니다. 이 실습의 핵심 목표는 **K-겹 교차 검증(K-Fold Cross-Validation)**을 통해 모델의 안정적인 성능을 확보하고, **과적합(Overfitting)**이 발생하기 전의 최적 훈련 횟수(Epochs)를 결정하는 것입니다.
+🏡 보스턴 주택 가격 예측 모델
+K-겹 교차 검증(K-Fold Cross-Validation) 및 최적 Epoch 탐색
 
-🔑 1. 사용한 데이터 및 모델 개요
-데이터셋: 보스턴 주택 가격 데이터셋 (Boston Housing Price Dataset)
+이 저장소에는 Keras를 사용하여 보스턴 주택 가격 데이터를 분석하고 예측하는 신경망 모델의 훈련 및 평가 과정이 담겨 있습니다.
+본 실습의 주요 목표는:
 
-총 13가지 특성(범죄율, 교육 수준, 공기 오염도 등)을 기반으로 주택 가격(1,000 단위)을 예측합니다.
+K-겹 교차 검증(K-Fold Cross-Validation) 을 활용하여 안정적인 성능을 확보하고
 
-모델 구조: **Dense Layer (밀집층)**로 구성된 심층 신경망을 사용했습니다.
+**과적합(Overfitting)**이 발생하기 전의 최적 훈련 Epoch 수를 찾아내는 것입니다.
 
-입력층: 특성 수에 맞는 입력.
+🔑 1. 데이터 및 모델 개요
+📌 데이터셋
 
-은닉층: ReLU 활성화 함수를 사용하는 64개 유닛의 Dense 층 2개.
+Boston Housing Price Dataset
 
-출력층: 1개 유닛 (가격 예측이 목표).
+총 13가지 특성(feature) 기반으로 주택 가격(단위: $1,000)을 예측하는 회귀(Regression) 문제입니다.
 
-손실 함수 / 평가지표:
+📌 모델 구조 (Keras Sequential Model)
 
-손실 함수 (Loss): 평균 제곱 오차 (MSE, Mean Squared Error)
+입력 데이터 정규화(Normalization)
 
-평가 지표 (Metrics): 평균 절대 오차 (MAE, Mean Absolute Error)
+2개의 Dense 은닉층 (각 64 units, 활성화 함수: ReLU)
+
+출력층: 1 unit (주택 가격 예측)
+
+📌 사용한 평가 지표
+
+Loss: MSE (Mean Squared Error)
+
+Metrics: MAE (Mean Absolute Error)
 
 📈 2. 핵심 실습 내용 및 결과
-A. K-겹 교차 검증 (K-Fold Cross-Validation)
-목표: 데이터 분할 방식에 따라 성능이 편향되는 것을 방지하고, 모델의 일반화 성능을 안정적으로 측정하기 위해 4-겹 교차 검증을 수행했습니다.
+A. ✔ K-겹 교차 검증 (4-Fold Cross-Validation)
 
-결과: 4개의 독립된 모델을 훈련하여, 각 폴드의 검증 MAE 기록(all_mae_histories)을 확보했습니다.
+목적: 훈련/검증 데이터 분할에 따른 편향을 줄이고 안정적인 일반화 성능을 평가
 
-B. 최적 에포크 결정 (과적합 방지)
-평균 MAE 계산: 4개 폴드의 에포크별 검증 MAE 기록을 평균 내어 **average_mae_history**를 생성했습니다.
+설정:
 
-평활화 (Smoothing): 노이즈가 심한 학습 초기를 제외하고 지수 이동 평균 기법을 사용하여 MAE 추이 곡선을 평활화했습니다.
+num_epochs = 500
 
-최적 에포크: 평활화된 곡선에서 MAE가 최저점을 찍고 다시 상승하기 시작하는 지점(과적합 시작 지점)을 확인하여, 최종 훈련에 사용할 최적 에포크 수 (약 XX회)를 결정했습니다.
+k = 4개의 폴드 생성
 
-C. 최종 모델 훈련 및 평가
-최종 훈련: 결정된 최적 에포크 수로 전체 훈련 데이터를 사용하여 최종 모델을 훈련했습니다.
+fold #0 ~ fold #3까지 순차적으로 훈련 및 평가
 
-최종 테스트 MAE: 모델이 한 번도 보지 못한 테스트 데이터셋에 대해 최종 평가를 수행했습니다.
+각 fold별로 모델을 새로 정의하여 훈련시킴
 
-최종 모델 성능 (예시): Test MAE: 약 [결과 값 입력] ($1,000)
+B. ✔ 최적 Epoch 결정 (과적합 방지)
 
-💾 3. 모델 저장 및 로드 형식
-모델 저장: 각 폴드별로 훈련된 모델은 Keras의 권장 형식인 .keras 확장자로 저장되었습니다.
+각 epoch마다 계산된 검증 MAE를 기록하여 average_mae_history를 생성
 
-Python
+초반 MAE는 노이즈가 커서 제외하고, 이후 값에 대해 지수 이동 평균(EMA) 평활화를 적용
+
+평활화된 MAE 그래프의 최저점을 찾아 최적 Epoch 수 결정
+
+C. ✔ 최종 모델 훈련 및 테스트 평가
+
+최적 epoch 수로 전체 훈련 데이터를 사용해 최종 모델 재학습
+
+이후 테스트 데이터셋으로 최종 성능을 검증
+
+📌 최종 모델 성능 (예시):
+
+Test MAE: 약 [최종 결과 값 입력] ($1,000)
+
+💾 3. 모델 저장 및 불러오기
+✔ 모델 저장 형식
+
+Keras 공식 권장 포맷인 .keras 확장자로 저장했습니다.
 
 model.save(f'boston_price_predictor_20251118_fold_{i}.keras')
-모델 로드: 저장된 모델은 keras.models.load_model() 함수를 사용하여 손실 함수, 가중치, 옵티마이저 상태 등 훈련 내용을 그대로 불러와 재사용할 수 있습니다.
+
+✔ 모델 로드 방법
+from keras.models import load_model
+
+model = load_model('boston_price_predictor_20251118_fold_0.keras')
+
+
+가중치(weights)와 네트워크 구조까지 그대로 복원됩니다.
